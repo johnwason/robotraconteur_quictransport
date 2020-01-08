@@ -26,11 +26,14 @@ namespace RobotRaconteur
     {
         class PicoQuicConnection;
         class PicoQuicServer;
+		class QuicConnector;
     }
 	
 	class ROBOTRACONTEUR_CORE_API QuicTransport : public Transport, public RR_ENABLE_SHARED_FROM_THIS<QuicTransport>
 	{
 		friend class QuicTransportConnection;
+		friend class detail::QuicConnector;
+		friend class detail::PicoQuicServer;
 		
 	public:
 		RR_UNORDERED_MAP<uint32_t, RR_SHARED_PTR<ITransportConnection> > TransportConnections;

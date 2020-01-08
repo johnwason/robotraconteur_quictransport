@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 		c->StartServer(64565);
 		
         RR_SHARED_PTR<TcpTransport> c2=RR_MAKE_SHARED<TcpTransport>();
-		c->StartServer(4565);
+		c2->StartServer(4565);
 
 		//c->EnableNodeAnnounce();
 		//c->EnableNodeDiscoveryListening();
@@ -77,9 +77,10 @@ int main(int argc, char* argv[])
 		
 		RR_SHARED_PTR<QuicTransport> c=RR_MAKE_SHARED<QuicTransport>();
 		c->StartServer(64565);
+		c->SetDisableAsyncMessageIO(true);
 		
         RR_SHARED_PTR<TcpTransport> c2=RR_MAKE_SHARED<TcpTransport>();
-		c->StartServer(4565);
+		c2->StartServer(4565);
 
 		//c->EnableNodeAnnounce();
 		//c->EnableNodeDiscoveryListening();
@@ -103,7 +104,7 @@ int main(int argc, char* argv[])
 		for (int j=0; j<count; j++)
 		{
 			ServiceTestClient cl;
-			cl.RunMinimalTest("rr+quic://localhost:64565?service=RobotRaconteurTestService");								
+			cl.RunMinimalTest("rr+quic://[::1]:64565?service=RobotRaconteurTestService");								
 		}
 
 		cout << "start shutdown" << endl;
@@ -111,7 +112,41 @@ int main(int argc, char* argv[])
 		RobotRaconteurNode::s()->Shutdown();
 		
 		cout << "Test completed, no errors detected!" << endl;
+
+		return 0;
     }
+
+	if (command == "server")
+	{
+		RR_SHARED_PTR<LocalTransport> c2=RR_MAKE_SHARED<LocalTransport>();
+		c2->StartServerAsNodeName("quictest", false);
+
+		RR_SHARED_PTR<TcpTransport> c=RR_MAKE_SHARED<TcpTransport>();		
+		
+		c->StartServer(4565);
+		
+		RR_SHARED_PTR<QuicTransport> c3=RR_MAKE_SHARED<QuicTransport>();
+		c3->StartServer(64565);		
+
+		RobotRaconteurNode::s()->RegisterTransport(c);
+		RobotRaconteurNode::s()->RegisterTransport(c2);		
+		RobotRaconteurNode::s()->RegisterTransport(c3);		
+		RobotRaconteurNode::s()->RegisterServiceType(RR_MAKE_SHARED<com__robotraconteur__testing__TestService1Factory>());
+		RobotRaconteurNode::s()->RegisterServiceType(RR_MAKE_SHARED<com__robotraconteur__testing__TestService2Factory>());
+		RobotRaconteurNode::s()->RegisterServiceType(RR_MAKE_SHARED<com__robotraconteur__testing__TestService3Factory>());
+
+		RobotRaconteurTestServiceSupport s;
+		s.RegisterServices(c);
+
+		RobotRaconteurTestService2Support s2;
+		s2.RegisterServices(c);
+
+		cout << "QUIC test server started, press enter to quit" << endl;
+		getchar();
+		RobotRaconteurNode::s()->Shutdown();
+		cout << "Test completed, no errors detected!" << endl;
+		return 0;
+	}
 
     throw std::runtime_error("unknown command");
 
